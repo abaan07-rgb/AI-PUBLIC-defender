@@ -1,155 +1,153 @@
 import streamlit as st
+import pandas as pd
+import random
+from datetime import datetime
 
-st.set_page_config(page_title="AI Public Defender", page_icon="⚖️", layout="wide")
+st.set_page_config(page_title="AI Public Defender", page_icon="⚖️", layout="wide", initial_sidebar_state="expanded")
 
-# ========== SEXY CUSTOM CSS ==========
+# ========== CUSTOM CSS ==========
 st.markdown("""
 <style>
-    /* Import Google Font */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+    /* Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800&display=swap');
     
-    * {
+    html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
     }
     
-    /* Animated gradient background */
+    /* Background with subtle animation */
     .stApp {
-        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        background: linear-gradient(135deg, #0B1120 0%, #19223B 50%, #1A2A4A 100%);
         background-attachment: fixed;
-        animation: gradientShift 10s ease infinite;
     }
     
-    @keyframes gradientShift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+    /* Floating particles */
+    .particle {
+        position: fixed;
+        border-radius: 50%;
+        background: rgba(100, 200, 255, 0.3);
+        pointer-events: none;
+        z-index: 0;
     }
     
-    /* Glassmorphism card effect */
-    .glass-card {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(12px);
-        border-radius: 30px;
-        padding: 2rem;
-        margin: 1rem 0;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    /* Main container */
+    .main-container {
+        position: relative;
+        z-index: 1;
     }
     
-    .glass-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
-        border: 1px solid rgba(255, 100, 100, 0.5);
-    }
-    
-    /* Neon title */
-    .neon-title {
+    /* Hero section */
+    .hero {
         text-align: center;
-        font-size: 4rem;
+        padding: 2rem 0;
+        margin-bottom: 1rem;
+    }
+    
+    .hero h1 {
+        font-size: 4.5rem;
         font-weight: 800;
-        background: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+        background: linear-gradient(135deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4);
         background-size: 300% 300%;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        animation: neonPulse 3s ease infinite, gradientFlow 4s ease infinite;
-        margin-bottom: 0;
-        text-shadow: 0 0 30px rgba(255, 107, 107, 0.5);
-    }
-    
-    @keyframes neonPulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.95; }
+        animation: gradientFlow 5s ease infinite;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.02em;
     }
     
     @keyframes gradientFlow {
-        0% { background-position: 0% 50%; }
+        0%, 100% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
     }
     
-    .subtitle {
-        text-align: center;
-        color: rgba(255, 255, 255, 0.8);
+    .hero p {
+        color: #A0B3D9;
         font-size: 1.2rem;
-        margin-bottom: 2rem;
-        letter-spacing: 1px;
+        max-width: 600px;
+        margin: 0 auto;
     }
     
-    /* Glowing emergency banner */
+    /* Emergency banner with pulse */
     .emergency-banner {
-        background: linear-gradient(90deg, #ff416c, #ff4b2b);
+        background: linear-gradient(135deg, #FF416C, #FF4B2B);
+        border-radius: 20px;
         padding: 1rem;
-        border-radius: 50px;
+        margin: 1rem 0;
         text-align: center;
+        animation: pulse 1.5s infinite;
+        box-shadow: 0 10px 30px rgba(255, 65, 108, 0.3);
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.01); opacity: 0.95; }
+    }
+    
+    .emergency-banner span {
         color: white;
-        font-weight: bold;
-        font-size: 1.1rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 0 30px rgba(255, 75, 43, 0.6);
-        animation: glow 1.5s ease-in-out infinite alternate;
-        letter-spacing: 1px;
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
     }
     
-    @keyframes glow {
-        from { box-shadow: 0 0 10px #ff416c; }
-        to { box-shadow: 0 0 30px #ff4b2b; }
+    /* Glass card */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        border-radius: 24px;
+        padding: 1.8rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
     }
     
-    /* Input field styling */
+    .glass-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-4px);
+    }
+    
+    /* Input styling */
     .stTextArea textarea {
         background: rgba(255, 255, 255, 0.95);
         border-radius: 20px;
-        border: 2px solid transparent;
+        border: 2px solid #4ECDC4;
         font-size: 1rem;
         padding: 1rem;
-        transition: all 0.3s ease;
-        color: #1a1a2e;
-        font-weight: 500;
+        transition: all 0.3s;
     }
     
     .stTextArea textarea:focus {
-        border: 2px solid #feca57;
-        box-shadow: 0 0 20px rgba(254, 202, 87, 0.4);
-        background: white;
+        border-color: #FF6B6B;
+        box-shadow: 0 0 15px rgba(255, 107, 107, 0.3);
     }
     
-    /* Sexy gradient button */
+    /* Button styling */
     .stButton button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-        background-size: 200% 200%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        font-size: 1.2rem;
-        font-weight: bold;
-        border-radius: 50px;
-        padding: 0.75rem 2rem;
-        transition: all 0.3s ease;
-        width: 100%;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 40px;
+        padding: 0.7rem;
+        transition: all 0.3s;
         border: none;
-        animation: buttonGradient 3s ease infinite;
+        width: 100%;
         letter-spacing: 1px;
     }
     
-    @keyframes buttonGradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-    
     .stButton button:hover {
-        transform: scale(1.03);
-        box-shadow: 0 10px 30px rgba(114, 9, 183, 0.5);
-        cursor: pointer;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
     }
     
-    /* Result card styling */
+    /* Result card */
     .result-card {
-        background: rgba(255, 255, 255, 0.15);
+        background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
         backdrop-filter: blur(15px);
-        border-radius: 25px;
+        border-radius: 28px;
         padding: 1.8rem;
         margin-top: 2rem;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(255,255,255,0.15);
         animation: slideUp 0.5s ease-out;
     }
     
@@ -164,282 +162,529 @@ st.markdown("""
         }
     }
     
-    /* Law badges */
-    .law-badge {
-        background: linear-gradient(135deg, #00b4db, #0083b0);
-        color: white;
-        padding: 0.4rem 1rem;
-        border-radius: 30px;
-        font-size: 0.85rem;
+    /* Badge styling */
+    .badge {
+        background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+        padding: 0.3rem 1rem;
+        border-radius: 50px;
         display: inline-block;
-        margin-right: 0.6rem;
-        margin-bottom: 0.6rem;
-        font-weight: 600;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        margin: 0.3rem;
+        color: white;
+        font-weight: 500;
+        font-size: 0.85rem;
+    }
+    
+    .badge-blue {
+        background: linear-gradient(135deg, #4ECDC4, #45B7D1);
+    }
+    
+    .badge-purple {
+        background: linear-gradient(135deg, #a8c0ff, #3f2b96);
     }
     
     /* Section headers */
-    .section-header {
-        font-size: 1.5rem;
+    .section-title {
+        font-size: 1.4rem;
         font-weight: 700;
-        margin-top: 1rem;
-        margin-bottom: 1rem;
-        background: linear-gradient(135deg, #feca57, #ff9ff3);
+        margin: 1.5rem 0 1rem 0;
+        background: linear-gradient(135deg, #FFD166, #FF6B6B);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
     
-    /* Sidebar styling */
+    /* Sidebar */
     [data-testid="stSidebar"] {
-        background: rgba(15, 12, 41, 0.8);
-        backdrop-filter: blur(10px);
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(11, 17, 32, 0.95);
+        border-right: 1px solid rgba(255,255,255,0.1);
     }
     
-    [data-testid="stSidebar"] * {
-        color: rgba(255, 255, 255, 0.9);
-    }
-    
-    /* Helpline boxes */
-    .helpline-item {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 0.5rem 1rem;
-        border-radius: 15px;
-        margin: 0.5rem 0;
-        border-left: 4px solid #ff6b6b;
-    }
-    
-    /* Expander styling */
-    .streamlit-expanderHeader {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 15px;
-        color: white;
-        font-weight: 600;
-    }
-    
-    /* Info/warning boxes */
-    .stAlert {
-        border-radius: 15px;
-        backdrop-filter: blur(5px);
-    }
-    
-    footer {
+    /* Stat cards */
+    .stat-card {
+        background: rgba(255,255,255,0.05);
+        border-radius: 16px;
+        padding: 1rem;
         text-align: center;
-        color: rgba(255, 255, 255, 0.5);
-        font-size: 0.8rem;
+        transition: all 0.3s;
+    }
+    
+    .stat-card:hover {
+        background: rgba(255,255,255,0.1);
+        transform: scale(1.02);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #FFD166, #FF6B6B);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* Footer */
+    .footer {
+        text-align: center;
         padding: 2rem;
+        color: #6B7B8F;
+        font-size: 0.85rem;
+    }
+    
+    /* Expander */
+    .streamlit-expanderHeader {
+        background: rgba(255,255,255,0.05);
+        border-radius: 12px;
+        color: white;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# ========== HEADER ==========
-st.markdown('<div class="neon-title">⚖️ AI Public Defender</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">✨ Intelligent legal guidance. Instant. Free. Empowering. ✨</div>', unsafe_allow_html=True)
+# ========== SESSION STATE ==========
+if "history" not in st.session_state:
+    st.session_state.history = []
+if "case_id" not in st.session_state:
+    st.session_state.case_id = random.randint(10000, 99999)
 
-# ========== EMERGENCY BANNER ==========
-st.markdown("""
-<div class="emergency-banner">
-    🚨 IMMEDIATE HELP 🚨 | Police: 112 | Women: 181 | Cyber: 1930 | Legal Aid: 15100
-</div>
-""", unsafe_allow_html=True)
-
-# ========== SIDEBAR ==========
-with st.sidebar:
-    st.markdown("## 📞 Emergency Helplines")
-    st.markdown("---")
-    
-    helplines_list = [
-        ("🚓 Police Emergency", "112"),
-        ("👩 Women Helpline", "181"),
-        ("💻 Cyber Crime", "1930"),
-        ("⚖️ NCW", "7827170170"),
-        ("👶 Child Helpline", "1098"),
-        ("📚 Legal Aid", "15100")
-    ]
-    
-    for name, num in helplines_list:
-        st.markdown(f'<div class="helpline-item">📞 <strong>{name}</strong><br><span style="font-size: 1.2rem;">{num}</span></div>', unsafe_allow_html=True)
-    
-    st.markdown("---")
-    st.markdown("## ⚖️ 12 Legal Scenarios")
-    st.markdown("---")
-    
-    issues = [
-        "🔴 Domestic Violence",
-        "🟡 Workplace Harassment",
-        "🟢 Tenant Disputes",
-        "🔵 Cyber Harassment",
-        "🟣 Divorce",
-        "👶 Child Custody",
-        "💰 Dowry Harassment",
-        "🔴 Rape/Assault",
-        "👮 Police Negligence",
-        "🧪 Acid Attack",
-        "🏠 Property Dispute",
-        "💸 Cheating/Fraud"
-    ]
-    
-    for issue in issues:
-        st.markdown(f"✅ {issue}")
-    
-    st.markdown("---")
-    st.markdown("### 📢 Disclaimer")
-    st.info("⚡ **Informational purposes only.** For specific legal advice, consult a lawyer. In emergency, call 112.")
-
-# ========== MAIN INPUT ==========
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.markdown("### 📝 Tell us what happened")
-    st.markdown("*Be as specific as possible for better guidance*")
-    user_input = st.text_area("", height=120, placeholder="🔍 Example: My husband has been physically abusing me for 2 years. He demands dowry and threatens to kill me. I have photos of injuries.", label_visibility="collapsed")
-    search_btn = st.button("✨ Get Legal Guidance ✨", use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ========== KNOWLEDGE BASE ==========
+# ========== KNOWLEDGE BASE (ENHANCED) ==========
 legal_knowledge = {
     "domestic_violence": {
-        "keywords": ["husband", "wife", "hit", "beat", "slap", "abuse", "violence", "threaten", "torture", "dowry", "mother in law", "push", "kick", "injury"],
+        "keywords": ["husband", "wife", "hit", "beat", "slap", "abuse", "violence", "threaten", "torture", "dowry", "mother in law", "push", "kick", "injury", "blood", "fight", "angry"],
         "title": "🔴 Domestic Violence",
-        "laws": ["Protection of Women from Domestic Violence Act, 2005", "IPC 498A"],
-        "immediate_actions": ["📞 Call 181 (Women Helpline) – 24x7", "📞 Call 112 for police", "🏥 Go to nearest hospital for medical exam", "👮 File complaint at police station (women's help desk)"],
-        "legal_options": ["File FIR under IPC 498A", "Apply for Protection Order", "Right to reside in shared household", "Claim compensation"],
-        "documents": ["Medical reports", "Photos of injuries", "Messages/call recordings", "Witness names"]
+        "severity": "Critical",
+        "response_time": "Immediate",
+        "laws": ["Protection of Women from Domestic Violence Act, 2005", "IPC Section 498A", "Dowry Prohibition Act, 1961"],
+        "immediate_actions": [
+            "📞 Call 181 (Women Helpline) – 24x7, Confidential",
+            "📞 Call 112 for immediate police assistance",
+            "🏥 Go to nearest hospital for free medical examination",
+            "👮 File complaint at police station (women's help desk available)",
+            "🏠 You have legal right to live in shared household"
+        ],
+        "legal_options": [
+            "File FIR under IPC 498A (cruelty by husband/relatives)",
+            "Apply for Protection Order from Magistrate",
+            "Seek Right to Reside in matrimonial home",
+            "Claim monetary compensation for injuries",
+            "File for divorce on grounds of cruelty"
+        ],
+        "documents": ["Medical reports", "Photos of injuries", "Call recordings", "WhatsApp messages", "Witness names", "Marriage certificate"],
+        "helplines": ["181", "112", "7827170170"]
     },
     "workplace_harassment": {
-        "keywords": ["boss", "manager", "colleague", "office", "work", "harass", "touch", "comment", "hr"],
+        "keywords": ["boss", "manager", "colleague", "office", "work", "harass", "touch", "comment", "hr", "coworker", "supervisor", "staff"],
         "title": "🟡 Workplace Harassment",
-        "laws": ["POSH Act, 2013", "IPC 354A"],
-        "immediate_actions": ["📝 Document every incident", "📞 Report to Internal Complaints Committee (ICC)", "📞 NCW helpline: 7827170170", "✉️ Send written complaint to HR"],
-        "legal_options": ["ICC complaint (resolve in 90 days)", "Police FIR under IPC 354A", "Seek transfer of harasser", "Claim compensation"],
-        "documents": ["Emails", "WhatsApp messages", "Witness names", "Incident log with dates"]
+        "severity": "High",
+        "response_time": "24 hours",
+        "laws": ["Sexual Harassment of Women at Workplace Act, 2013 (POSH)", "IPC Section 354A"],
+        "immediate_actions": [
+            "📝 Document every incident with date, time, location",
+            "📞 Report to Internal Complaints Committee (ICC) – mandatory in all companies",
+            "✉️ Send written complaint to HR (keep a copy)",
+            "📞 Call NCW helpline: 7827170170",
+            "🚫 Tell the harasser clearly to stop (in writing if possible)"
+        ],
+        "legal_options": [
+            "ICC complaint – must resolve within 90 days",
+            "Police FIR under IPC 354A",
+            "Seek transfer of harasser or yourself",
+            "Claim compensation from employer",
+            "File civil suit for damages"
+        ],
+        "documents": ["Emails", "WhatsApp messages", "Witness names", "Incident log with dates", "CCTV footage request"],
+        "helplines": ["7827170170", "112"]
     },
     "tenant_dispute": {
-        "keywords": ["landlord", "rent", "deposit", "evict", "lease", "agreement", "owner"],
+        "keywords": ["landlord", "rent", "deposit", "evict", "house", "apartment", "lease", "agreement", "owner", "tenancy", "security deposit"],
         "title": "🟢 Tenant Rights",
-        "laws": ["Rent Control Act", "Transfer of Property Act"],
-        "immediate_actions": ["📝 Send written notice (registered post)", "📞 Call local Rent Control Authority", "📸 Take photos of property condition", "🚫 Do not stop paying rent without advice"],
-        "legal_options": ["Complaint to Rent Controller", "Legal notice through lawyer", "Consumer court complaint", "Civil suit for deposit refund"],
-        "documents": ["Rent agreement", "Deposit receipt", "Bank statements", "Photos of property"]
+        "severity": "Medium",
+        "response_time": "48 hours",
+        "laws": ["Rent Control Act (state specific)", "Transfer of Property Act, 1882", "Consumer Protection Act"],
+        "immediate_actions": [
+            "📝 Send written notice to landlord via registered post",
+            "📞 Call local Rent Control Authority",
+            "📸 Take photos/videos of property condition",
+            "💰 Do not stop paying rent without legal advice"
+        ],
+        "legal_options": [
+            "File complaint with Rent Controller for illegal eviction",
+            "Send legal notice through lawyer",
+            "Consumer court complaint for unfair practice",
+            "Civil suit for deposit refund"
+        ],
+        "documents": ["Rent agreement", "Deposit receipt", "Bank statements", "Photos of property", "Notice copies"],
+        "helplines": ["15100"]
     },
     "cyber_harassment": {
-        "keywords": ["facebook", "instagram", "whatsapp", "photo", "leak", "morphed", "fake id", "online", "cyber"],
+        "keywords": ["facebook", "instagram", "whatsapp", "telegram", "photo", "video", "leak", "morphed", "fake id", "online", "social media", "troll", "cyber", "internet", "email"],
         "title": "🔵 Cyber Harassment",
-        "laws": ["IT Act 2000", "IPC 354C", "BNS 2023"],
-        "immediate_actions": ["📸 Take screenshots (critical)", "🚫 Block the person", "📞 Call 1930 (Cyber Helpline)", "🌐 Report at cybercrime.gov.in"],
-        "legal_options": ["File online cyber complaint", "Register FIR at cyber cell", "Court order for content removal", "Claim compensation"],
-        "documents": ["Screenshots", "URLs", "Timestamps", "Device details"]
+        "severity": "High",
+        "response_time": "Immediate",
+        "laws": ["IT Act 2000 Sections 66E, 67", "IPC 354C, 509", "Bharatiya Nyaya Sanhita 2023"],
+        "immediate_actions": [
+            "📸 Take screenshots of EVERYTHING (critical evidence)",
+            "🚫 Block the person immediately",
+            "📞 Call cyber helpline: 1930",
+            "🌐 Report on cybercrime.gov.in (anonymous option available)",
+            "🔒 Change all passwords and enable 2FA"
+        ],
+        "legal_options": [
+            "File complaint on cybercrime portal (online FIR)",
+            "Register FIR at local cyber cell",
+            "Get court order for content removal",
+            "Claim compensation under IT Act",
+            "Report to platform for account suspension"
+        ],
+        "documents": ["Screenshots", "URLs", "Profile links", "Timestamps", "Device details"],
+        "helplines": ["1930", "112"]
     },
     "divorce": {
-        "keywords": ["divorce", "separate", "leave husband", "leave wife", "cruelty", "end marriage", "talaq"],
+        "keywords": ["divorce", "separate", "leave husband", "leave wife", "cruelty", "no love", "end marriage", "talaq", "mutual", "contested"],
         "title": "🟣 Divorce & Separation",
-        "laws": ["Hindu Marriage Act", "Special Marriage Act", "Muslim Personal Law"],
-        "immediate_actions": ["📝 Gather marriage proof (certificate, photos)", "💰 Document all assets and incomes", "👨‍👩‍👧 Discuss child custody if applicable", "🏠 Decide who keeps the house"],
-        "legal_options": ["Mutual consent divorce (6-18 months)", "Contested divorce (if partner disagrees)", "Claim maintenance/alimony", "Seek child custody"],
-        "documents": ["Marriage certificate", "Income proof", "Child birth certificate", "Property documents"]
+        "severity": "High",
+        "response_time": "1 week",
+        "laws": ["Hindu Marriage Act, 1955", "Special Marriage Act, 1954", "Muslim Personal Law", "Indian Divorce Act, 1869"],
+        "immediate_actions": [
+            "📝 Gather all marriage proof (certificate, photos, invitations)",
+            "💰 Document all assets, incomes, expenses",
+            "👨‍👩‍👧 Discuss and decide about children",
+            "🏠 Decide who will stay in the house"
+        ],
+        "legal_options": [
+            "Mutual consent divorce (quickest, 6-18 months)",
+            "Contested divorce (if partner doesn't agree)",
+            "File for maintenance/alimony under Section 125 CrPC",
+            "Seek child custody (physical or joint)",
+            "Annulment if marriage was fraudulent"
+        ],
+        "documents": ["Marriage certificate", "Income proofs", "Child birth certificates", "Property documents", "Evidence of cruelty"],
+        "helplines": ["15100"]
     },
     "child_custody": {
-        "keywords": ["child", "kid", "son", "daughter", "custody", "visitation", "parenting", "guardian"],
+        "keywords": ["child", "kid", "son", "daughter", "custody", "visitation", "parenting", "guardian", "minor", "children"],
         "title": "👶 Child Custody",
-        "laws": ["Guardians and Wards Act", "Hindu Minority Act"],
-        "immediate_actions": ["👶 Ensure child's safety first", "📝 Document your involvement (school, medical)", "🚫 Do not hide or kidnap the child", "👨‍⚖️ File for interim custody if urgent"],
-        "legal_options": ["Physical custody", "Joint custody (shared parenting)", "Visitation rights for other parent", "Legal guardianship"],
-        "documents": ["Child's birth certificate", "School records", "Medical records", "Proof of financial stability"]
+        "severity": "High",
+        "response_time": "48 hours",
+        "laws": ["Guardians and Wards Act, 1890", "Hindu Minority and Guardianship Act, 1956", "Juvenile Justice Act"],
+        "immediate_actions": [
+            "👶 Ensure child's safety first",
+            "📝 Document your involvement in child's life",
+            "🚫 Do NOT hide or kidnap the child",
+            "👨‍⚖️ File for interim custody if urgent"
+        ],
+        "legal_options": [
+            "Physical custody (child lives with you)",
+            "Joint custody (shared parenting time)",
+            "Visitation rights for other parent",
+            "Legal guardianship (decision-making power)",
+            "Supervised visitation if safety concerns"
+        ],
+        "documents": ["Child's birth certificate", "School records", "Medical records", "Proof of financial stability"],
+        "helplines": ["1098", "15100"]
     },
     "dowry_harassment": {
-        "keywords": ["dowry", "dahej", "demand", "in-laws", "sasural", "dowry death"],
+        "keywords": ["dowry", "dahej", "money", "gift", "car", "jewelry", "demand", "in-laws", "sasural", "dowry death"],
         "title": "💰 Dowry Harassment",
-        "laws": ["Dowry Prohibition Act", "IPC 304B", "IPC 498A"],
-        "immediate_actions": ["📞 Call 181 immediately", "📝 List all dowry items given", "📸 Take photos of jewelry/gifts", "🏃‍♀️ Leave the unsafe environment"],
-        "legal_options": ["File FIR under Dowry Prohibition Act", "IPC 498A for cruelty", "Claim back dowry items", "Protection order"],
-        "documents": ["List of dowry items", "Photos", "Witnesses (relatives/friends)", "Marriage invitation (shows gifts)"]
+        "severity": "Critical",
+        "response_time": "Immediate",
+        "laws": ["Dowry Prohibition Act, 1961", "IPC 304B (dowry death)", "IPC 498A"],
+        "immediate_actions": [
+            "📞 Call 181 IMMEDIATELY",
+            "📝 Make list of all dowry items given with approximate value",
+            "📸 Take photos of jewelry/gifts",
+            "🏃‍♀️ Leave the unsafe environment",
+            "👮 File complaint before dowry demands escalate"
+        ],
+        "legal_options": [
+            "File FIR under Dowry Prohibition Act",
+            "Section 498A IPC for cruelty",
+            "If death occurs, Section 304B (7 years to life)",
+            "Claim back dowry items",
+            "Protection order from court"
+        ],
+        "documents": ["List of dowry items", "Photos", "Witnesses (relatives, friends)", "Bank statements", "Marriage invitation"],
+        "helplines": ["181", "112"]
     },
     "rape_sexual_assault": {
-        "keywords": ["rape", "assault", "forced sex", "molest", "gang rape", "penetration", "pocso"],
+        "keywords": ["rape", "assault", "forced sex", "molest", "gang rape", "penetration", "pocso", "minor", "child"],
         "title": "🔴 Rape & Sexual Assault",
-        "laws": ["IPC 375/376", "POCSO Act", "BNS 2023"],
-        "immediate_actions": ["🚨 Call 112 immediately", "🏥 Go to hospital (do not wash or change clothes)", "👮 File FIR (woman officer will record)", "📞 Call 181 for support"],
-        "legal_options": ["Free legal aid under Legal Services Authority", "In-camera trial (privacy protected)", "Claim compensation from State", "Medical termination if allowed"],
-        "documents": ["Medical report", "Clothes worn during assault", "CCTV footage", "Witness names"]
+        "severity": "Critical",
+        "response_time": "Immediate",
+        "laws": ["IPC 375 (rape)", "IPC 376 (punishment)", "POCSO Act, 2012 (for minors)", "Bharatiya Nyaya Sanhita 2023"],
+        "immediate_actions": [
+            "🚨 Call 112 IMMEDIATELY",
+            "🏥 Go to nearest hospital for medical examination (free, DON'T wash or change clothes)",
+            "👮 File FIR – your statement recorded by woman police officer",
+            "🤝 Contact NGO: RAHI Foundation 1800-11-4313",
+            "📞 Call 181 for support"
+        ],
+        "legal_options": [
+            "File FIR – police must register (zero FIR if jurisdiction issue)",
+            "Free legal aid under Legal Services Authority",
+            "In-camera trial (privacy protected)",
+            "Claim compensation from State Legal Services Authority",
+            "Medical termination of pregnancy if allowed"
+        ],
+        "documents": ["Medical report", "Clothes worn during assault", "CCTV footage", "Witnesses", "Call records"],
+        "helplines": ["112", "181", "1098"]
     },
     "police_negligence": {
-        "keywords": ["police not filing", "police refusing", "no fir", "police lazy", "thana"],
+        "keywords": ["police not filing", "police refusing", "no fir", "police lazy", "police corrupt", "thana"],
         "title": "👮 Police Negligence",
+        "severity": "Medium",
+        "response_time": "24 hours",
         "laws": ["Section 154 CrPC", "Section 166A IPC"],
-        "immediate_actions": ["📝 Get refusal in writing (if possible)", "📞 Call 112 and complain about station", "📧 Send email to SP/DGP", "📞 State Human Rights Commission"],
-        "legal_options": ["File complaint before Magistrate u/s 156(3) CrPC", "Write petition in High Court", "Claim compensation for negligence"],
-        "documents": ["Written refusal", "Date/time of visit", "Officer's name", "Your complaint copy"]
+        "immediate_actions": [
+            "📝 Get refusal in writing (if police refuse to file FIR)",
+            "📞 Call 112 and complain about the specific police station",
+            "📧 Send complaint to Superintendent of Police (SP) by email",
+            "📞 Contact State Human Rights Commission"
+        ],
+        "legal_options": [
+            "File complaint before Magistrate under Section 156(3) CrPC",
+            "Send legal notice to Police Commissioner",
+            "File writ petition in High Court",
+            "Claim compensation for police negligence"
+        ],
+        "documents": ["Written refusal", "Date/time of visit", "Police officer name", "Your complaint copy"],
+        "helplines": ["112", "15100"]
     },
     "acid_attack": {
-        "keywords": ["acid", "throw acid", "burn", "chemical", "face burn", "vitriol"],
+        "keywords": ["acid", "throw acid", "burn", "chemical", "face burn", "corrosive", "vitriol"],
         "title": "🧪 Acid Attack",
-        "laws": ["IPC 326A (10 years to life)", "IPC 326B (attempted acid attack)"],
-        "immediate_actions": ["🚨 Call 112", "🏥 Go to hospital immediately", "💧 Wash continuously with water", "📞 Call 181 for rehabilitation"],
-        "legal_options": ["FIR under IPC 326A", "Compensation up to ₹15 lakhs", "Free medical treatment", "In-camera trial"],
-        "documents": ["Medical report", "Clothes", "CCTV footage", "Acid bottle if available"]
+        "severity": "Critical",
+        "response_time": "Immediate",
+        "laws": ["IPC 326A (acid attack – minimum 10 years, maximum life)", "IPC 326B (attempted acid attack)"],
+        "immediate_actions": [
+            "🚨 Call 112 IMMEDIATELY",
+            "🏥 Go to nearest hospital (acid attack is medical emergency)",
+            "💧 Do NOT rub, wash with running water continuously",
+            "👮 Police must file FIR under non-bailable sections",
+            "📞 Call 181 for support and rehabilitation"
+        ],
+        "legal_options": [
+            "File FIR – strict punishment (minimum 10 years)",
+            "Claim compensation up to ₹15 lakhs from State",
+            "Free medical treatment and rehabilitation",
+            "In-camera trial for privacy",
+            "Apply for disability certificate for benefits"
+        ],
+        "documents": ["Medical report", "Clothes", "Witnesses", "CCTV footage", "Acid bottle (if available)"],
+        "helplines": ["112", "181"]
     },
     "property_dispute": {
-        "keywords": ["land", "plot", "property", "ownership", "encroachment", "boundary", "will", "inheritance"],
+        "keywords": ["land", "plot", "house", "property", "ownership", "encroachment", "boundary", "will", "inheritance", "ancestral"],
         "title": "🏠 Property Dispute",
-        "laws": ["Transfer of Property Act", "Registration Act", "Specific Relief Act"],
-        "immediate_actions": ["📑 Collect all property documents", "📸 Take photos of encroachment", "📝 Send legal notice", "🚫 Do not forcibly remove encroachment"],
-        "legal_options": ["Civil suit for possession", "Injunction to stop construction", "Police complaint for criminal trespass", "Lok Adalat for settlement"],
-        "documents": ["Sale deed", "Tax receipts", "Encumbrance certificate", "Will/legal heir certificate"]
+        "severity": "Medium",
+        "response_time": "1 week",
+        "laws": ["Transfer of Property Act", "Registration Act", "Specific Relief Act", "Indian Succession Act"],
+        "immediate_actions": [
+            "📑 Collect all property documents (sale deed, gift deed, will)",
+            "📸 Take photos of encroachment or boundary dispute",
+            "📝 Send legal notice to other party",
+            "🚫 Do NOT forcibly remove encroachment – go to court"
+        ],
+        "legal_options": [
+            "File civil suit for possession",
+            "Injunction to stop construction/encroachment",
+            "File police complaint if criminal trespass",
+            "Mutation in revenue records",
+            "Approach Lok Adalat for settlement"
+        ],
+        "documents": ["Sale deed", "Property tax receipts", "Encumbrance certificate", "Survey map", "Will (if inheritance)"],
+        "helplines": ["15100"]
     },
     "cheating_fraud": {
-        "keywords": ["cheat", "fraud", "scam", "fake", "money taken", "investment fraud", "online fraud", "loan fraud"],
+        "keywords": ["cheat", "fraud", "scam", "fake", "promise", "money taken", "investment fraud", "online fraud", "loan fraud", "credit card fraud"],
         "title": "💸 Cheating / Fraud",
-        "laws": ["IPC 420", "IPC 406", "IT Act"],
-        "immediate_actions": ["📞 Call 1930 (Cyber Fraud Helpline)", "🔒 Freeze bank account immediately", "📸 Save all transaction screenshots", "📞 Police cyber cell"],
-        "legal_options": ["File FIR under Section 420", "Consumer court complaint", "RBI complaint for banking fraud", "Civil suit for recovery"],
-        "documents": ["Payment receipts", "Bank statements", "Screenshots of communication", "Contract/agreement"]
+        "severity": "High",
+        "response_time": "24 hours",
+        "laws": ["IPC 420 (cheating)", "IPC 406 (criminal breach of trust)", "IT Act for online fraud"],
+        "immediate_actions": [
+            "📞 Call 1930 (cyber fraud helpline) IMMEDIATELY",
+            "🔒 Freeze bank account (contact bank immediately)",
+            "📸 Save all transaction screenshots",
+            "📞 Call police cyber cell"
+        ],
+        "legal_options": [
+            "File FIR under Section 420",
+            "Consumer court complaint if product/service fraud",
+            "Complaint to RBI for banking fraud",
+            "Civil suit for recovery of money",
+            "Claim compensation"
+        ],
+        "documents": ["Payment receipts", "Bank statements", "Communication screenshots", "Contract/agreement"],
+        "helplines": ["1930", "112"]
     }
 }
 
+# ========== HELPLINES ==========
+helplines = {
+    "🚓 Police Emergency": "112",
+    "👩 Women Helpline": "181",
+    "💻 Cyber Crime": "1930",
+    "⚖️ NCW": "7827170170",
+    "👶 Child Helpline (POCSO)": "1098",
+    "📚 Legal Aid Helpline": "15100",
+    "👴 Senior Citizens Helpline": "14567",
+    "🤝 RAHI (Sexual assault support)": "1800-11-4313"
+}
+
+# ========== UTILITY FUNCTIONS ==========
 def find_scenario(user_input):
     user_input = user_input.lower()
+    scores = {}
     for sid, data in legal_knowledge.items():
+        score = 0
         for kw in data["keywords"]:
             if kw in user_input:
-                return sid, data
-    return None, None
+                score += 1
+        if score > 0:
+            scores[sid] = score
+    if scores:
+        best = max(scores, key=scores.get)
+        return best, legal_knowledge[best], scores[best]
+    return None, None, 0
 
-# ========== PROCESS INPUT ==========
+def save_to_history(question, scenario):
+    st.session_state.history.append({
+        "timestamp": datetime.now().strftime("%H:%M:%S"),
+        "question": question[:100],
+        "scenario": scenario if scenario else "Unmatched",
+        "case_id": st.session_state.case_id
+    })
+
+# ========== SIDEBAR ==========
+with st.sidebar:
+    st.markdown("### ⚖️ AI Public Defender")
+    st.markdown("*Your legal companion*")
+    st.markdown("---")
+    
+    # Quick stats
+    st.markdown("### 📊 Quick Stats")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown('<div class="stat-card"><div class="stat-number">12</div>Legal Scenarios</div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown('<div class="stat-card"><div class="stat-number">24/7</div>Available</div>', unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Emergency helplines
+    st.markdown("### 🚨 Emergency Helplines")
+    for name, num in helplines.items():
+        st.markdown(f"**{name}**  \n`{num}`")
+    
+    st.markdown("---")
+    
+    # Supported issues
+    with st.expander("📋 Supported Issues (12)", expanded=False):
+        for issue in legal_knowledge.keys():
+            st.markdown(f"• {legal_knowledge[issue]['title']}")
+    
+    st.markdown("---")
+    
+    # Session info
+    st.caption(f"Session ID: #{st.session_state.case_id}")
+    if st.session_state.history:
+        st.caption(f"Queries: {len(st.session_state.history)}")
+
+# ========== MAIN CONTENT ==========
+st.markdown('<div class="main-container">', unsafe_allow_html=True)
+
+# Hero section
+st.markdown("""
+<div class="hero">
+    <h1>⚖️ AI Public Defender</h1>
+    <p>Intelligent legal guidance. Free. Private. Empowering.</p>
+</div>
+""", unsafe_allow_html=True)
+
+# Emergency banner
+st.markdown("""
+<div class="emergency-banner">
+    <span>🚨 IMMEDIATE HELP: Police 112 | Women 181 | Cyber 1930 | Legal Aid 15100 🚨</span>
+</div>
+""", unsafe_allow_html=True)
+
+# Input section
+st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+st.markdown("### 📝 Describe your legal situation")
+st.markdown("*Be specific – include what happened, who did it, and when*")
+
+user_input = st.text_area(
+    "", 
+    height=120, 
+    placeholder="Example: My husband has been physically abusing me for 2 years. He demands dowry and threatens to kill me. I have photos of my injuries.",
+    label_visibility="collapsed"
+)
+
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    search_btn = st.button("🔍 Analyze My Situation", use_container_width=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Process input
 if search_btn and user_input:
-    with st.spinner("🔍 Analyzing your situation..."):
-        sid, data = find_scenario(user_input)
+    with st.spinner("Analyzing your situation..."):
+        scenario_id, data, confidence = find_scenario(user_input)
+        save_to_history(user_input, scenario_id)
     
     if data:
+        # Confidence indicator
+        if confidence >= 3:
+            st.success(f"✅ **High confidence match** – {data['title']}")
+        elif confidence >= 2:
+            st.info(f"📌 **Medium confidence match** – {data['title']}")
+        else:
+            st.warning(f"⚠️ **Low confidence match** – {data['title']}")
+        
+        # Main result card
         st.markdown('<div class="result-card">', unsafe_allow_html=True)
         
+        # Title and severity
         st.markdown(f"## {data['title']}")
+        severity_colors = {"Critical": "🔴", "High": "🟠", "Medium": "🟡", "Low": "🟢"}
+        st.markdown(f"**Severity:** {severity_colors.get(data['severity'], '⚪')} {data['severity']} | **Response needed:** {data['response_time']}")
+        st.markdown("---")
         
         # Laws
-        st.markdown('<div class="section-header">📚 Laws That Protect You</div>', unsafe_allow_html=True)
+        st.markdown('<p class="section-title">📚 Laws That Protect You</p>', unsafe_allow_html=True)
         for law in data["laws"]:
-            st.markdown(f'<span class="law-badge">{law}</span>', unsafe_allow_html=True)
+            st.markdown(f'<span class="badge">{law}</span>', unsafe_allow_html=True)
         st.markdown("")
         
         # Immediate actions
-        st.markdown('<div class="section-header">🚨 What You Can Do RIGHT NOW</div>', unsafe_allow_html=True)
+        st.markdown('<p class="section-title">🚨 What You Can Do RIGHT NOW</p>', unsafe_allow_html=True)
         for action in data["immediate_actions"]:
             st.markdown(f"- {action}")
         
         # Legal options
         with st.expander("⚖️ Detailed Legal Options (Click to expand)"):
             for opt in data["legal_options"]:
-                st.markdown(f"- {opt}")
+                st.markdown(f"• {opt}")
         
-        # Documents needed
+        # Documents
         with st.expander("📄 Documents to Collect (Click to expand)"):
             for doc in data["documents"]:
-                st.markdown(f"- {doc}")
+                st.markdown(f"• {doc}")
+        
+        # Helplines for this scenario
+        if data.get("helplines"):
+            st.markdown("---")
+            st.markdown("### 📞 Specific Helplines for Your Situation")
+            cols = st.columns(len(data["helplines"]))
+            for idx, hl in enumerate(data["helplines"]):
+                name = [n for n, num in helplines.items() if num == hl]
+                name = name[0] if name else hl
+                cols[idx].markdown(f"**{name}**  \n`{hl}`")
         
         # Download guide
-        guide_text = f"""AI PUBLIC DEFENDER - LEGAL GUIDE
-{data['title']}
+        guide = f"""AI PUBLIC DEFENDER - LEGAL GUIDE
+Case ID: #{st.session_state.case_id}
+Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
-LAWS: {', '.join(data['laws'])}
+{data['title']} (Severity: {data['severity']})
+
+LAWS:
+{chr(10).join(data['laws'])}
 
 IMMEDIATE ACTIONS:
 {chr(10).join(data['immediate_actions'])}
@@ -451,21 +696,40 @@ DOCUMENTS NEEDED:
 {chr(10).join(data['documents'])}
 
 HELPLINES:
-Police: 112 | Women: 181 | Cyber: 1930 | Legal Aid: 15100
+{chr(10).join([f'{k}: {v}' for k,v in helplines.items()])}
 
-Disclaimer: This is for information only. Consult a lawyer for specific advice.
+Disclaimer: This is for informational purposes only. Consult a lawyer for specific advice.
 """
-        st.download_button("📥 Download Legal Guide", guide_text, file_name=f"legal_guide_{sid}.txt", use_container_width=True)
+        st.download_button("📥 Download Complete Legal Guide (TXT)", guide, file_name=f"legal_guide_{scenario_id}_{st.session_state.case_id}.txt", use_container_width=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
+        
     else:
-        st.warning("⚠️ **Couldn't match your situation.** Please rephrase or call helplines.")
-        st.info("💡 **Tips:** Use words like 'hit', 'harass', 'deposit not returned', 'divorce', 'custody', 'fraud'.")
-        st.markdown('<div class="glass-card" style="text-align:center;">📞 <strong>Legal Aid Helpline: 15100</strong> – Free legal advice from certified lawyers</div>', unsafe_allow_html=True)
+        st.warning("⚠️ **We couldn't match your situation**")
+        st.markdown("""
+        ### 💡 Try these tips:
+        - Use specific words like **"hit"**, **"harass"**, **"deposit not returned"**, **"divorce"**, **"custody"**
+        - Mention **who** did it (husband, boss, landlord, stranger)
+        - Include **what** happened (abuse, fraud, eviction, threat)
+        """)
+        st.info("📞 **Need immediate help? Call Legal Aid Helpline: 15100** (Free, confidential)")
 
 elif search_btn and not user_input:
-    st.error("✨ Please describe your situation first ✨")
+    st.error("📝 Please describe your situation before clicking the button.")
 
-# ========== FOOTER ==========
-st.markdown("---")
-st.markdown('<footer>⚖️ AI Public Defender – Empowering justice for all | Hackathon 2026 | <span style="color:#ff6b6b;">❤️</span> Made for social impact</footer>', unsafe_allow_html=True)
+# History section
+if st.session_state.history:
+    with st.expander("📜 Your Query History", expanded=False):
+        for h in st.session_state.history[-5:]:
+            st.markdown(f"**{h['timestamp']}** – {h['scenario']}  \n*\"{h['question']}...\"*")
+            st.markdown("---")
+
+# Footer
+st.markdown("""
+<div class="footer">
+    ⚖️ AI Public Defender – Hackathon 2026<br>
+    <span style="font-size: 0.75rem;">Not a substitute for a lawyer. In emergency, call 112.</span>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
